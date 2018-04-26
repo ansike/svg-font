@@ -1,0 +1,41 @@
+cache:
+    key: ${CI_COMMIT_SHA}
+    paths:
+        - target
+
+build:
+    stage: build
+    script:
+        - npm install --registry=https://registry.npm.taobao.org
+        - rm -rf target
+        - scripts/fontgen.js target
+
+
+schooin:
+    stage: deploy
+    script:
+        - export CI_REPO=`echo $CI_REPOSITORY_URL | perl -pe 's#.*@(.+?(\:\d+)?)/#git@\1:#'`
+        - git config --global user.email "buildersupport@eeoa.com"
+        - git config --global user.name "builder_support"
+        - git clone git@gitlab:support/ClassChimp
+        - cp target/* ClassChimp/frontend/saas_vue/src/assets/font/
+        - pushd ClassChimp
+        - git add .
+        - git commit -m "Update font files to ${CI_COMMIT_SHA:0:8} of ${CI_REPO}"
+        - git push origin master
+        - popd
+    only:
+        - master
+        
+pages:
+  stage: deploy
+  script:
+    - rm -rf public 
+    - mkdir -p public 
+    - cp target/* public/
+    - mv public/demo_unicode.html public/index.html
+  artifacts:
+    paths:
+      - public
+  only:
+    - master # this job will affect only the 'master' branch

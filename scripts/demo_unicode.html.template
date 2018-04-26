@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+      <link rel="stylesheet" type="text/css" href="font.css">
+      <style>
+        body { margin-top:50;margin-left:25%;margin-right:25%;padding:0 }
+        .equalDivide tr td { width:14%; }
+        .font {
+            font-size:48px;font-style:normal;
+            color:rgba(25,25,25,0.7);
+            line-height: 160%;
+         }
+        .tds {
+            cursor:pointer;
+        }
+        .tds:hover { transform: scale(1.2); }
+    </style>
+
+    <script src="http://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<div id="body">
+</div>
+
+</body>
+</html>
+
+<script>
+    var svgNames = [];
+    <%for (var s = 0; s < this.svgs.length; s++) {%>
+        svgNames.push('<%this.svgs[s]%>');
+    <%}%>
+    var ipl = 7; /* icons per line */
+    var schooinBmpHead = 0xee00;
+    var html = '<h1 align="center">schooin icon fonts</h1>';
+    html += '<table class="equalDivide" cellpadding="0" cellspacing="20" width="100%" border="0">';
+    for (var i = 0; i < <%this.count%>; i++) {
+        if (i % ipl == 0) {
+            html += '<tr>';
+        }
+        html += '<td align="center"><div>'
+            + '<span class="font">' + '&#x' + (schooinBmpHead + i).toString(16) + '</span>'
+            + '<br/>'
+            + '<span>' + svgNames[i] + '</span>'
+            + '<br/>'
+            + '<span class="content">' + '&amp;#x' + (schooinBmpHead + i).toString(16) + ';</span>'
+            + '</div></td>';
+        if (i % ipl == ipl) {
+            html += '</tr>';
+        }
+    }
+    html += '</table>';
+    $("#body").html(html);
+
+    function selectText(element) {
+        var text = element[0];
+        if (document.body.createTextRange) {
+            var range = document.body.createTextRange();
+            range.moveToElementText(text);
+            range.select();
+        } else if (window.getSelection) {
+            var selection = window.getSelection();
+            var range = document.createRange();
+            range.selectNodeContents(text);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        } else {
+            alert("none");
+        }
+        var successful = document.execCommand('copy');
+    }
+
+    function notify(msg) { 
+        if (window.Notification) {
+            if (Notification.permission == "granted") {
+                popNotice(msg);
+            } else if (Notification.permission != "denied") {
+                Notification.requestPermission(function (permission) {
+                    popNotice(msg);
+                });
+            }  
+        }
+    }
+
+    function popNotice(msg) {
+        if (Notification.permission == "granted") {
+            var notification = new Notification("Schooin Icon", {
+                body: msg,
+                icon: 'icon-01.png'
+            });
+            setTimeout(() => { notification.close() }, 3000);
+        }
+    }
+
+    function paste() {
+        var result = '',
+            sandbox = $('#sandbox').val('').select();
+        if (document.execCommand('paste')) {
+            result = sandbox.val();
+        }
+        sandbox.val('');
+        return result;
+    }
+
+    var children=$("#body").find("td");
+    for (var i = 0; i < children.length; i++) {
+        var tds = children.eq(i);
+        tds.addClass('tds');
+        tds.on('click', function() {
+            selectText($(this).find(".content"))
+        });
+    }
+
+    document.addEventListener('copy', () => {
+        var content = event.path[0].innerText;
+        notify("Copied: " + content);
+    });
+</script>
